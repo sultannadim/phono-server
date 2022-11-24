@@ -25,6 +25,7 @@ async function run() {
   try {
     const categoryesCollection = client.db("phonoDb").collection("categories");
     const usersCollection = client.db("phonoDb").collection("users");
+    const productsCollection = client.db("phonoDb").collection("products");
     // get categories
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -43,6 +44,12 @@ async function run() {
       const query = { email: email };
       const roleUser = await usersCollection.findOne(query);
       res.send(roleUser);
+    });
+    // insert product in database
+    app.post("/products", async (req, res) => {
+      const products = req.body;
+      const result = await productsCollection.insertOne(products);
+      res.send(result);
     });
   } finally {
   }
