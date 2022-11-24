@@ -58,6 +58,13 @@ async function run() {
       const category = await productsCollection.find(query).toArray();
       res.send(category);
     });
+    // get seller product
+    app.get("/product/:seller", async (req, res) => {
+      const seller = req.params.seller;
+      const auery = { sellerName: seller };
+      const sellerProduct = await productsCollection.find(auery).toArray();
+      res.send(sellerProduct);
+    });
   } finally {
   }
 }
