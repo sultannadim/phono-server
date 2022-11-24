@@ -24,11 +24,18 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const categoryesCollection = client.db("phonoDb").collection("categories");
+    const usersCollection = client.db("phonoDb").collection("users");
     // get categories
     app.get("/categories", async (req, res) => {
       const query = {};
       const category = await categoryesCollection.find(query).toArray();
       res.send(category);
+    });
+    // set users in database
+    app.post("/users", async (req, res) => {
+      const users = req.body;
+      const result = await usersCollection.insertOne(users);
+      res.send(result);
     });
   } finally {
   }
