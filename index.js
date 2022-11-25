@@ -92,6 +92,18 @@ async function run() {
       );
       res.send(result);
     });
+    // get advertise product
+    app.get("/advertise", async (req, res) => {
+      const query = { advertise: "Added" };
+      const advertiseProduct = await productsCollection.find(query).toArray();
+      res.send(advertiseProduct);
+    });
+    // get all sellers
+    app.get("/allsellers", async (req, res) => {
+      const query = { role: "Seller" };
+      const allSeller = await usersCollection.find(query).toArray();
+      res.send(allSeller);
+    });
   } finally {
   }
 }
