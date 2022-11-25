@@ -62,8 +62,35 @@ async function run() {
     app.get("/product/:seller", async (req, res) => {
       const seller = req.params.seller;
       const auery = { sellerName: seller };
-      const sellerProduct = await productsCollection.find(auery).toArray();
+      const sellerProduct = await productsCollection
+        .find(auery)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(sellerProduct);
+    });
+    // delete seller product
+    app.delete("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await productsCollection.deleteOne(query);
+      res.send(result);
+    });
+    // set advertise
+    app.put("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          advertise: "Added",
+        },
+      };
+      const result = await productsCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      res.send(result);
     });
   } finally {
   }
