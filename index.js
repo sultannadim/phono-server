@@ -39,11 +39,11 @@ async function run() {
       res.send(result);
     });
     // get role user
-    app.get("/roleuser/:email", async (req, res) => {
-      const email = req.params.email;
+    app.get("/roleuser", async (req, res) => {
+      const email = req.query.email;
       const query = { email: email };
-      const roleUser = await usersCollection.findOne(query);
-      res.send(roleUser);
+      const roleUse = await usersCollection.findOne(query);
+      res.send(roleUse);
     });
     // insert product in database
     app.post("/products", async (req, res) => {
