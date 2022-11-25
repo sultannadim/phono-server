@@ -104,6 +104,41 @@ async function run() {
       const allSeller = await usersCollection.find(query).toArray();
       res.send(allSeller);
     });
+    // verify seller
+    app.put("/allsellers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          status: "Verified",
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, options);
+
+      res.send(result);
+    });
+
+    // seller delete
+    app.delete("/allsellers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
+    // get all buyer
+    app.get("/allbuyers", async (req, res) => {
+      const query = { role: "User" };
+      const allBuyer = await usersCollection.find(query).toArray();
+      res.send(allBuyer);
+    });
+    // delete buyer
+    app.delete("/allbuyers/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
   } finally {
   }
 }
