@@ -26,6 +26,7 @@ async function run() {
     const categoryesCollection = client.db("phonoDb").collection("categories");
     const usersCollection = client.db("phonoDb").collection("users");
     const productsCollection = client.db("phonoDb").collection("products");
+    const ordersCollection = client.db("phonoDb").collection("orders");
     // get categories
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -59,9 +60,9 @@ async function run() {
       res.send(category);
     });
     // get seller product
-    app.get("/product/:seller", async (req, res) => {
-      const seller = req.params.seller;
-      const auery = { sellerName: seller };
+    app.get("/product", async (req, res) => {
+      const email = req.query.email;
+      const auery = { sellerEmail: email };
       const sellerProduct = await productsCollection
         .find(auery)
         .sort({ _id: -1 })
@@ -138,6 +139,19 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const result = await usersCollection.deleteOne(query);
       res.send(result);
+    });
+    // post order data
+    app.post("/orders", async (req, res) => {
+      const orders = req.body;
+      const result = await ordersCollection.insertOne(orders);
+      res.send(result);
+    });
+    // get orders
+    app.get("/orders", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const orders = await ordersCollection.find(query).toArray();
+      res.send(orders);
     });
   } finally {
   }
