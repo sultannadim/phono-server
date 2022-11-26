@@ -150,8 +150,18 @@ async function run() {
     app.get("/orders", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
-      const orders = await ordersCollection.find(query).toArray();
+      const orders = await ordersCollection
+        .find(query)
+        .sort({ _id: -1 })
+        .toArray();
       res.send(orders);
+    });
+    // delete order
+    app.delete("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await ordersCollection.deleteOne(query);
+      res.send(result);
     });
   } finally {
   }
