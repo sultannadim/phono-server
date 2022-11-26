@@ -4,6 +4,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -27,6 +28,8 @@ async function run() {
     const usersCollection = client.db("phonoDb").collection("users");
     const productsCollection = client.db("phonoDb").collection("products");
     const ordersCollection = client.db("phonoDb").collection("orders");
+    const paymentCollection = client.db("phonoDb").collection("payment");
+    const reportsCollection = client.db("phonoDb").collection("reports");
     // get categories
     app.get("/categories", async (req, res) => {
       const query = {};
@@ -162,6 +165,78 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const result = await ordersCollection.deleteOne(query);
       res.send(result);
+    });
+    // get single order
+    app.get("/orders/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const order = await ordersCollection.findOne(query);
+      res.send(order);
+    });
+    // stripe payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = booking.price;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    // add payment info to database
+    app.post("/payment", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentCollection.insertOne(payment);
+      const id = payment.bookinID;
+      const query = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paymentStatus: "Paid",
+          transactionId: payment.trangactionId,
+        },
+      };
+      const updateOrder = await ordersCollection.updateOne(query, updatedDoc);
+      const idTwo = payment.productId;
+      const queryTwo = { _id: ObjectId(idTwo) };
+      const updatedDoctwo = {
+        $set: {
+          status: "Sold",
+        },
+      };
+      const updateProduct = await productsCollection.updateMany(
+        queryTwo,
+        updatedDoctwo
+      );
+      res.send(result);
+    });
+    // post reported product
+    app.post("/reports", async (req, res) => {
+      const report = req.body;
+      const result = await reportsCollection.insertOne(report);
+      const id = report.reportedProductId;
+      const query = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          reportStatus: "Reported",
+        },
+      };
+      const reportProduct = await productsCollection.updateOne(
+        query,
+        updatedDoc
+      );
+      res.send(result);
+    });
+    // get reported product
+    app.get("/reported", async (req, res) => {
+      const query = { reportStatus: "Reported" };
+      const repotedProduct = await productsCollection.find(query).toArray();
+      res.send(repotedProduct);
     });
   } finally {
   }
