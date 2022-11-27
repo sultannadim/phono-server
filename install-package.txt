@@ -3,3 +3,4 @@
 3.npm i dotenv
 4.npm i mongodb
 5.npm install --save stripe
+6.npm install jsonwebtoken

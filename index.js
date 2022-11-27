@@ -1,4 +1,5 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -22,6 +23,25 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// jwt verifaction
+
+function varifyJWT(req, res, next) {
+  const authHeader = req.headers.autorization;
+
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized User" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (error, decoded) {
+    if (error) {
+      return res.status(403).send({ message: "Unauthorized User" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const categoryesCollection = client.db("phonoDb").collection("categories");
@@ -97,7 +117,7 @@ async function run() {
       res.send(result);
     });
     // get advertise product
-    app.get("/advertise", async (req, res) => {
+    app.get("/advertise", varifyJWT, async (req, res) => {
       const query = { advertise: "Added" };
       const advertiseProduct = await productsCollection.find(query).toArray();
       res.send(advertiseProduct);
@@ -131,7 +151,7 @@ async function run() {
       res.send(result);
     });
     // get all buyer
-    app.get("/allbuyers", async (req, res) => {
+    app.get("/allbuyers", varifyJWT, async (req, res) => {
       const query = { role: "User" };
       const allBuyer = await usersCollection.find(query).toArray();
       res.send(allBuyer);
@@ -150,9 +170,16 @@ async function run() {
       res.send(result);
     });
     // get orders
-    app.get("/orders", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
+    app.get("/orders", varifyJWT, async (req, res) => {
+      // jwt start
+      const decoded = req.decoded;
+      if (decoded.email !== req.query.email) {
+        return res.status(401).send({ message: "Unauthorized User" });
+      }
+      // jwt end
+      const orderEmail = req.query.email;
+
+      const query = { email: orderEmail };
       const orders = await ordersCollection
         .find(query)
         .sort({ _id: -1 })
@@ -238,6 +265,15 @@ async function run() {
       const repotedProduct = await productsCollection.find(query).toArray();
       res.send(repotedProduct);
     });
+    // jwt token start
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+        expiresIn: "1d",
+      });
+      res.send({ token });
+    });
+    // jwt token end
   } finally {
   }
 }
